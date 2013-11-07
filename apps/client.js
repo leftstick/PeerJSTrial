@@ -46,8 +46,10 @@ function showSelfVideo () {
 }
 
 function addTextToDisplayBox(txt){
-    $('#displayBox').val($('#displayBox').val() + txt + "\n");
+    var displayBox = $('#displayBox');
+    displayBox.val(displayBox.val() + txt + "\n");
     $('#chatInput').val("");
+    displayBox.scrollTop(displayBox[0].scrollHeight - displayBox.height());
 }
 
 

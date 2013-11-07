@@ -46,8 +46,10 @@ function showSelfVideo () {
 }
 
 function addTextToDisplayBox(txt){
-    $('#displayBox').val($('#displayBox').val() + txt + "\n");
+    var displayBox = $('#displayBox');
+    displayBox.val(displayBox.val() + txt + "\n");
     $('#chatInput').val("");
+    displayBox.scrollTop(displayBox[0].scrollHeight - displayBox.height());
 }
 
 // Get things started
@@ -63,6 +65,7 @@ $('#sendMessage').tooltip({
     placement: 'bottom'
 });
 
+
 // PeerJS object
 var peer = new Peer({ key: 'm4lam1d6op28d7vi'});
 
@@ -73,7 +76,6 @@ peer.on('open', function(){
 
 peer.on('connection', function(conn) {
     conn.on('data', function(data){
-        console.log("host :"+ data);
         var d = dateParse(data);
         if(d.type === TALK){
             addTextToDisplayBox(d.data);
