@@ -12,12 +12,14 @@ var step2Div = $('#step2');
 var step3Div = $('#step3');
 var step1Err = $('#step1-error');
 var step1Info = $('#step1-info');
+var chatBoard = $('#chatBoard');
 
 //init three panels
 step1Div.show();
 step2Div.hide();
 step3Div.hide();
 step1Err.hide();
+chatBoard.hide();
 
 function dateParse(data){
     var dataObj = {type: undefined, data: undefined};
@@ -147,14 +149,18 @@ $('#nickname').on('keyup', function(e){
 
 
 
-function step2() {
-    $('#step1, #step3, #chatBoard').hide();
-    $('#step2').show();
+function step2 () {
+    step1Div.hide();
+    step3Div.hide();
+    chatBoard.hide();
+    step2Div.show();
 }
 
-function step3() {
-    $('#step1, #step2').hide();
-    $('#step3, #chatBoard').show();
+function step3 () {
+    step1Div.hide();
+    step2Div.hide();
+    step3Div.show();
+    chatBoard.show();
 }
 
 function createConnection(peerId){
