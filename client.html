@@ -46,7 +46,20 @@
                   <div id="step3">
                       <p>Currently in call with</p>
                       <p><a href="#" class="btn btn-danger" id="shutdown">Shutdown</a></p>
+                      <p>
+                           <div class="input-group">
+                               <input id= "nickname" placeholder="nick name..." class="form-control" type="text"/>
+                               <span class="input-group-addon"><a id="updateNick" href="#" title="Click here to update your nick name" class="glyphicon glyphicon-floppy-open"></a></span>
+                           </div>
+                      </p>
                   </div>
+          </div>
+          <div id="chatBoard" class="col-md-5">
+               <textarea id="displayBox" class="form-control text-chat" rows="10"></textarea>
+               <div class="input-group text-input">
+                   <input id="chatInput" type="text" class="form-control"/>
+                   <span id="sendMessage" class="input-group-addon" title="press enter to send your message"><span class="glyphicon glyphicon-arrow-right"></span></span>
+               </div>
           </div>
       </div>
       
@@ -59,11 +72,28 @@
   </div>
 
       
-      
+<!-- Modal -->
+<div class="modal fade" id="feedback" tabindex="-1" role="dialog" aria-labelledby="title" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="title"><span class="glyphicon glyphicon-info-sign"></span>&nbsp;&nbsp;Information</h4>
+      </div>
+      <div class="modal-body text-success">
+         Nick name changed successfully!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 </body>
 </html>
 <script type="text/javascript" src="libs/JQuery-2.0.3.js"></script>
+<script type="text/javascript" src="libs/bootstrap.js"></script>
 <script type="text/javascript" src="libs/peer.js"></script>
 <script type="text/javascript" src="apps/client.js"></script>

@@ -1,6 +1,12 @@
+var KEY_ENTER = 13;
+var NEW_COMER = "NEW_COMER";
+var TALK = "TALK";
+var nickName;
+var peerId;
 // Compatibility shim
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 var callers = [];
+var connections = {};
 var step1Div = $('#step1');
 var step2Div = $('#step2');
 var step3Div = $('#step3');
@@ -13,6 +19,19 @@ step2Div.hide();
 step3Div.hide();
 step1Err.hide();
 
+function dateParse(data){
+    var dataObj = {type: undefined, data: undefined};
+    if(data.indexOf(NEW_COMER+":") === 0){
+        dataObj.type = NEW_COMER;
+        dataObj.data = data.substr(10);
+        return dataObj;
+    }else if(data.indexOf(TALK+":" === 0)){
+        dataObj.type = TALK;
+        dataObj.data = data.substr(5);
+        return dataObj;
+    }
+}
+
 function showSelfVideo () {
   // Get audio/video stream
   navigator.getUserMedia({audio: true, video: true}, function(stream){
@@ -24,14 +43,40 @@ function showSelfVideo () {
   }, function(){ step1Err.show(); step1Info.hide();});
 }
 
+function addTextToDisplayBox(txt){
+    $('#displayBox').val($('#displayBox').val() + txt + "\n");
+    $('#chatInput').val("");
+}
+
 // Get things started
 showSelfVideo();
+
+$('#updateNick').tooltip({
+    container: 'body',
+    placement: 'bottom'
+});
+
+$('#sendMessage').tooltip({
+    container: 'body',
+    placement: 'bottom'
+});
 
 // PeerJS object
 var peer = new Peer({ key: 'm4lam1d6op28d7vi'});
 
 peer.on('open', function(){
     $('#my-id').text(peer.id);
+    peerId = peer.id;
+});
+
+peer.on('connection', function(conn) {
+    conn.on('data', function(data){
+        console.log("host :"+ data);
+        var d = dateParse(data);
+        if(d.type === TALK){
+            addTextToDisplayBox(d.data);
+        }
+    });
 });
 
 // Receiving a call
@@ -66,28 +111,68 @@ $('#step1-retry').click(function(){
     step1();
 });
 
+$('#chatInput').on('keyup', function(e){
+    var value = $.trim($(this).val());
+    if(e.keyCode === KEY_ENTER){
+        if(value){
+            for(var i in connections){
+                connections[i].send("TALK:" + (nickName ? nickName : peerId) + " : " + value);
+            }
+            addTextToDisplayBox((nickName ? nickName : "Me") + " : " + value);
+        }
+    }
+    return false;
+});
+
+$('#updateNick').on('click', function(e){
+    var value = $.trim($('#nickname').val());
+    if(value){
+        nickName = value;
+        $('#feedback').modal();
+    }
+    return false;
+});
+
+$('#nickname').on('keyup', function(e){
+
+    if(e.keyCode === KEY_ENTER){
+        var value = $.trim($(this).val());
+        if(value){
+            nickName = value;
+            $('#feedback').modal();
+        }
+    }
+    return false;
+});
+
 
 
 function step2() {
-    $('#step1, #step3').hide();
+    $('#step1, #step3, #chatBoard').hide();
     $('#step2').show();
 }
 
 function step3() {
     $('#step1, #step2').hide();
-    $('#step3').show();
+    $('#step3, #chatBoard').show();
+}
+
+function createConnection(peerId){
+    var conn = connections[peerId];
+    if(!conn){
+        conn = connections[peerId] = peer.connect(peerId);
+    }
+}
+
+function getConnection(peerId){
+    return connections[peerId];
 }
 
 function onReceiveCall(call) {
+    createConnection(call.peer);
     for(var i in callers){
-        console.log(callers[i]);
-        var conn = peer.connect(callers[i].peer);
-        (function(co){
-            co.on('open', function(){
-                console.log("sending..." + "NEW_COMER:"+call.peer);
-                co.send("NEW_COMER:"+call.peer);
-            });
-        }(conn));
+        var conn = getConnection(callers[i].peer);
+        conn.send("NEW_COMER:"+ call.peer);
     }
     var id = new Date().getTime();
     var divId = id + "_d";
@@ -115,6 +200,9 @@ function removeCaller(caller){
     for(var i in callers){
         var c = callers[i];
         if(c === caller){
+            connections[c.peer].close();
+            connections[c.peer] = undefined;
+            delete connections[c.peer];
             callers.splice(i, 1);
             break;
         }
