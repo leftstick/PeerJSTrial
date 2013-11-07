@@ -1,3 +1,4 @@
+var NEW_COMER = "NEW_COMER";
 // Compatibility shim
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 var callers = [];
@@ -12,6 +13,15 @@ step1Div.show();
 step2Div.hide();
 step3Div.hide();
 step1Err.hide();
+
+function dateParse(data){
+    var dataObj = {type: undefined, data: undefined};
+    if(data.indexOf(NEW_COMER+":") === 0){
+        dataObj.type = NEW_COMER;
+        dataObj.data = data.substr(10);
+        return dataObj;
+    }
+}
 
 function showSelfVideo () {
   // Get audio/video stream
@@ -35,6 +45,16 @@ peer.on('open', function(){
     console.log(peer.id);
 });
 
+peer.on('connection', function(conn) {
+    conn.on('data', function(data){
+        var d = dateParse(data);
+        if(d.type === NEW_COMER){
+            var call = peer.call(d.data, window.localStream);
+            onReceiveCall(call);
+        }
+    });
+});
+
 $('#make-call').click(function(){
     // Initiate a call!
     var call = peer.call($('#callto-id').val(), window.localStream);
@@ -46,8 +66,7 @@ $('#make-call').click(function(){
 // Receiving a call
 peer.on('call', function(call){
     // Answer the call automatically (instead of prompting user) for demo purposes
-    //call.answer(window.localStream);
-    console.log("call", call);
+    call.answer(window.localStream);
     onReceiveCall(call);
 });
 
@@ -60,7 +79,10 @@ peer.on('error', function(err){
 $('#shutdown').click(function(){
     for(var i in callers){
         var call = callers[i];
-        call.close();
+        var close = function(c){
+            return function(){c.close()};
+        }(call);
+        setTimeout(close, 1000);
     }
     step2();
 });

@@ -79,7 +79,16 @@ function step3() {
 }
 
 function onReceiveCall(call) {
-   
+    for(var i in callers){
+        console.log(callers[i]);
+        var conn = peer.connect(callers[i].peer);
+        (function(co){
+            co.on('open', function(){
+                console.log("sending..." + "NEW_COMER:"+call.peer);
+                co.send("NEW_COMER:"+call.peer);
+            });
+        }(conn));
+    }
     var id = new Date().getTime();
     var divId = id + "_d";
     var videoId = id + "_v";
