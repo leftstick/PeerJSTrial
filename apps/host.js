@@ -48,7 +48,6 @@ function showSelfVideo () {
 function addTextToDisplayBox(txt){
     var displayBox = $('#displayBox');
     displayBox.val(displayBox.val() + txt + "\n");
-    $('#chatInput').val("");
     displayBox.scrollTop(displayBox[0].scrollHeight - displayBox.height());
 }
 
@@ -123,6 +122,7 @@ $('#chatInput').on('keyup', function(e){
                 connections[i].send("TALK:" + (nickName ? nickName : peerId) + " : " + value);
             }
             addTextToDisplayBox((nickName ? nickName : "Me") + " : " + value);
+            $('#chatInput').val("");
         }
     }
     return false;
