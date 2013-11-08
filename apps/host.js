@@ -22,6 +22,7 @@ step3Div.hide();
 step1Err.hide();
 chatBoard.hide();
 
+
 function dateParse(data){
     var dataObj = {type: undefined, data: undefined};
     if(data.indexOf(NEW_COMER+":") === 0){
@@ -126,6 +127,7 @@ function sendMessage(msg){
     }
 }
 
+
 // Retry if getUserMedia fails
 $('#step1-retry').click(function(){
     step1Err.hide();
@@ -148,10 +150,7 @@ $('#chatInput').on('keyup', function(e){
 function changeNickName(newName){
     if(newName){
         nickName = newName;
-        for(var i in connections){
-            console.log("sending... ="+ NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
-            connections[i].send(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
-        }
+        sendMessage(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
         $('#feedback').modal();
     }
 }
@@ -219,6 +218,11 @@ function onReceiveCall(call) {
     call.on('stream', function(stream){
         options.url = URL.createObjectURL(stream);
         addPeople(options);
+        if(nickName){
+            setTimeout(function(){
+                getConnection(options.callerId).send(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
+            }, 5000);
+        }
     });
 
     call.on('close', onCallClose(options));

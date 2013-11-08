@@ -22,6 +22,7 @@ step3Div.hide();
 step1Err.hide();
 chatBoard.hide();
 
+
 function dateParse(data){
     var dataObj = {type: undefined, data: undefined};
     if(data.indexOf(NEW_COMER+":") === 0){
@@ -82,8 +83,8 @@ peer.on('open', function(){
 
 peer.on('connection', function(conn) {
     conn.on('data', function(data){
-
         var d = dateParse(data);
+
         if(d.type === NEW_COMER){
             var call = peer.call(d.data, window.localStream);
             onReceiveCall(call);
@@ -95,7 +96,6 @@ peer.on('connection', function(conn) {
             var updateId = d.data.substring(0, index);
             var newNickName = d.data.substring(index + 1);
             var isHost = $("#"+updateId).attr("isHost");
-            console.log(isHost);
             var prefix = isHost === "true" ? "HOST" : (newNickName ? "Nickname" : "Id");
             var updateValue = newNickName ? newNickName : updateId;
             $("#"+updateId).html(prefix + ": <span class=\"label label-info\">"+updateValue+"</span>");
@@ -130,6 +130,7 @@ function sendMessage(msg){
     }
 }
 
+
 $('#shutdown').click(function(){
     for(var i in callers){
         var call = callers[i];
@@ -155,9 +156,7 @@ $('#chatInput').on('keyup', function(e){
 function changeNickName(newName){
     if(newName){
         nickName = newName;
-        for(var i in connections){
-            connections[i].send(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
-        }
+        sendMessage(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
         $('#feedback').modal();
     }
 }
@@ -232,6 +231,11 @@ function onReceiveCall(call, isHost) {
     call.on('stream', function(stream){
         options.url = URL.createObjectURL(stream);
         addPeople(options);
+        if(nickName){
+            setTimeout(function(){
+                getConnection(options.callerId).send(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
+            }, 5000);
+        }
     });
 
     call.on('close', onCallClose(options));
