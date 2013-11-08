@@ -1,6 +1,7 @@
 var KEY_ENTER = 13;
 var NEW_COMER = "NEW_COMER";
 var TALK = "TALK";
+var NICK_NAME_UPDATE = "NICK_NAME_UPDATE";
 var nickName;
 var peerId;
 // Compatibility shim
@@ -27,9 +28,14 @@ function dateParse(data){
         dataObj.type = NEW_COMER;
         dataObj.data = data.substr(10);
         return dataObj;
-    }else if(data.indexOf(TALK+":" === 0)){
+    }else if(data.indexOf(TALK+":") === 0){
         dataObj.type = TALK;
         dataObj.data = data.substr(5);
+        return dataObj;
+    }else if(data.indexOf(NICK_NAME_UPDATE+":") === 0){
+
+        dataObj.type = NICK_NAME_UPDATE;
+        dataObj.data = data.substr(17);
         return dataObj;
     }
 }
@@ -76,13 +82,24 @@ peer.on('open', function(){
 
 peer.on('connection', function(conn) {
     conn.on('data', function(data){
-        var d = dateParse(data);
 
+        var d = dateParse(data);
         if(d.type === NEW_COMER){
             var call = peer.call(d.data, window.localStream);
             onReceiveCall(call);
         }else if(d.type === TALK){
             addTextToDisplayBox(d.data);
+        }else if(d.type === NICK_NAME_UPDATE){
+
+            var index = d.data.indexOf("_");
+            var updateId = d.data.substring(0, index);
+            var newNickName = d.data.substring(index + 1);
+            var isHost = $("#"+updateId).attr("isHost");
+            console.log(isHost);
+            var prefix = isHost === "true" ? "HOST" : (newNickName ? "Nickname" : "Id");
+            var updateValue = newNickName ? newNickName : updateId;
+            $("#"+updateId).html(prefix + ": <span class=\"label label-info\">"+updateValue+"</span>");
+            
         }
     });
 });
@@ -107,6 +124,12 @@ peer.on('error', function(err){
     step2();
 });
 
+function sendMessage(msg){
+    for(var i in connections){
+        connections[i].send(msg);
+    }
+}
+
 $('#shutdown').click(function(){
     for(var i in callers){
         var call = callers[i];
@@ -122,21 +145,26 @@ $('#chatInput').on('keyup', function(e){
     var value = $.trim($(this).val());
     if(e.keyCode === KEY_ENTER){
         if(value){
-            for(var i in connections){
-                connections[i].send("TALK:" + (nickName ? nickName : peerId) + " : " + value);
-            }
+            sendMessage("TALK:" + (nickName ? nickName : peerId) + " : " + value);
             addTextToDisplayBox((nickName ? nickName : "Me") + " : " + value);
             $('#chatInput').val("");
         }
     }
 });
 
-$('#updateNick').on('click', function(e){
-    var value = $.trim($('#nickname').val());
-    if(value){
-        nickName = value;
+function changeNickName(newName){
+    if(newName){
+        nickName = newName;
+        for(var i in connections){
+            connections[i].send(NICK_NAME_UPDATE + ":" + peerId + "_" + nickName);
+        }
         $('#feedback').modal();
     }
+}
+
+$('#updateNick').on('click', function(e){
+    var value = $.trim($('#nickname').val());
+    changeNickName(value);
     return false;
 });
 
@@ -144,10 +172,7 @@ $('#nickname').on('keyup', function(e){
 
     if(e.keyCode === KEY_ENTER){
         var value = $.trim($(this).val());
-        if(value){
-            nickName = value;
-            $('#feedback').modal();
-        }
+        changeNickName(value);
     }
     return false;
 });
@@ -244,7 +269,7 @@ function addPeople(options){
                     "<div class=\"thumbnail frameClient\">" +
                         "<video id=\""+options.videoId+"\" class=\"thumbnail video\" src=\""+options.url+"\" autoplay></video>" +
                         "<div class=\"caption\">" +
-                            "<p>"+(options.isHost ? "HOST " : "Id")+": <span class=\"label label-info\">"+ options.callerId+"</span></p>" +
+                            "<p id=\""+options.callerId+"\" isHost=\""+options.isHost+"\">"+(options.isHost ? "HOST " : "Id")+": <span class=\"label label-info\">"+ options.callerId+"</span></p>" +
                         "</div>" +
                     "</div>" +
                 "</div>";
