@@ -4,8 +4,7 @@ var TALK = "TALK";
 var NICK_NAME_UPDATE = "NICK_NAME_UPDATE";
 var nickName;
 var peerId;
-// Compatibility shim
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
 var callers = [];
 var connections = {};
 var step1Div = $('#step1');
@@ -72,8 +71,14 @@ $('#sendMessage').tooltip({
     placement: 'bottom'
 });
 
+$('a[fullscreen]').tooltip({
+    container: 'body',
+    placement: 'right'
+});
+
 // PeerJS object
 var peer = new Peer({ key: 'm4lam1d6op28d7vi'});
+// var peer = new Peer('zuohao', {host: '192.168.0.115', port: 9000});
 
 peer.on('open', function(){
     // $('#my-id').text(peer.id);
@@ -176,6 +181,23 @@ $('#nickname').on('keyup', function(e){
     return false;
 });
 
+$('body').on('click', 'a[fullscreen]', function(e){
+    var video = $(this).parent().parent().siblings('video');
+    video.removeClass('video');
+    requestFullScreen.apply(video[0]);
+    lastControlVideo = video;
+    return false;
+});
+
+document.addEventListener(FULLSCREEN_EVENT, function () {
+    if(isFullscreen() || !lastControlVideo){
+        return;
+    }
+    if(!lastControlVideo.hasClass('video')){
+        lastControlVideo.addClass('video');
+    }
+}, false);
+
 
 // Retry if getUserMedia fails
 $('#step1-retry').click(function(){
@@ -274,6 +296,7 @@ function addPeople(options){
                         "<video id=\""+options.videoId+"\" class=\"thumbnail video\" src=\""+options.url+"\" autoplay></video>" +
                         "<div class=\"caption\">" +
                             "<p id=\""+options.callerId+"\" isHost=\""+options.isHost+"\">"+(options.isHost ? "HOST " : "Id")+": <span class=\"label label-info\">"+ options.callerId+"</span></p>" +
+                            "<p class=\"pull-left\"><a fullscreen class=\"glyphicon glyphicon-fullscreen rightoff\" title=\"fullscreen\"></a></p>" +
                         "</div>" +
                     "</div>" +
                 "</div>";
@@ -281,5 +304,10 @@ function addPeople(options){
 
     $("#"+options.endCallId).on('click', function(e){
         options.caller.close();
+    });
+
+    $('a[fullscreen]').tooltip({
+        container: 'body',
+        placement: 'right'
     });
 }

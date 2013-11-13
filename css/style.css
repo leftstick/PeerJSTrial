@@ -42,3 +42,11 @@ hr.soften {
 .text-input {
 	margin-top: 5px;
 }
+
+.rightoff {
+	margin-right: 130px;
+	font-size: 24px;
+	vertical-align: top;
+	text-align: center;
+
+}
