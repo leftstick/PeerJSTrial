@@ -25,6 +25,7 @@ body {
 	height: 192px;
 	max-width: 250px;
 	max-height: 192px;
+	border:1px solid #DDDDDD;
 }
 
 hr.soften {
@@ -46,7 +47,5 @@ hr.soften {
 .rightoff {
 	margin-right: 130px;
 	font-size: 24px;
-	vertical-align: top;
-	text-align: center;
-
+	vertical-align: middle;
 }

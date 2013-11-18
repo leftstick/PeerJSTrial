@@ -4,7 +4,6 @@ var TALK = "TALK";
 var NICK_NAME_UPDATE = "NICK_NAME_UPDATE";
 var nickName;
 var peerId;
-var lastControlVideo;
 
 var callers = [];
 var connections = {};
@@ -34,6 +33,7 @@ function dateParse(data){
         dataObj.data = data.substr(5);
         return dataObj;
     }else if(data.indexOf(NICK_NAME_UPDATE+":") === 0){
+
         dataObj.type = NICK_NAME_UPDATE;
         dataObj.data = data.substr(17);
         return dataObj;
@@ -44,7 +44,7 @@ function showSelfVideo () {
   // Get audio/video stream
   navigator.getUserMedia({audio: true, video: true}, function(stream){
     // Set your video displays
-    $('#host-video').prop('src', URL.createObjectURL(stream));
+    $('#client-video').prop('src', URL.createObjectURL(stream));
 
     window.localStream = stream;
     step2();
@@ -56,6 +56,7 @@ function addTextToDisplayBox(txt){
     displayBox.val(displayBox.val() + txt + "\n");
     displayBox.scrollTop(displayBox[0].scrollHeight - displayBox.height());
 }
+
 
 // Get things started
 showSelfVideo();
@@ -75,30 +76,44 @@ $('a[fullscreen]').tooltip({
     placement: 'right'
 });
 
-
 // PeerJS object
 var peer = new Peer({ key: 'm4lam1d6op28d7vi'});
-// var peer = new Peer('nanfeng', {host: 'localhost', port: 9000});
+// var peer = new Peer('zuohao', {host: '192.168.0.115', port: 9000});
 
 peer.on('open', function(){
-    $('#my-id').text(peer.id);
+    // $('#my-id').text(peer.id);
+    console.log(peer.id);
     peerId = peer.id;
 });
 
 peer.on('connection', function(conn) {
     conn.on('data', function(data){
         var d = dateParse(data);
-        if(d.type === TALK){
+
+        if(d.type === NEW_COMER){
+            var call = peer.call(d.data, window.localStream);
+            onReceiveCall(call);
+        }else if(d.type === TALK){
             addTextToDisplayBox(d.data);
         }else if(d.type === NICK_NAME_UPDATE){
+
             var index = d.data.indexOf("_");
             var updateId = d.data.substring(0, index);
             var newNickName = d.data.substring(index + 1);
-            var prefix = newNickName ? "Nickname" : "Id";
+            var isHost = $("#"+updateId).attr("isHost");
+            var prefix = isHost === "true" ? "HOST" : (newNickName ? "Nickname" : "Id");
             var updateValue = newNickName ? newNickName : updateId;
             $("#"+updateId).html(prefix + ": <span class=\"label label-info\">"+updateValue+"</span>");
+            
         }
     });
+});
+
+$('#make-call').click(function(){
+    // Initiate a call!
+    var call = peer.call($('#callto-id').val(), window.localStream);
+    onReceiveCall(call, true);
+    step3();
 });
 
 // Receiving a call
@@ -106,7 +121,6 @@ peer.on('call', function(call){
     // Answer the call automatically (instead of prompting user) for demo purposes
     call.answer(window.localStream);
     onReceiveCall(call);
-    step3();
 });
 
 peer.on('error', function(err){
@@ -114,6 +128,13 @@ peer.on('error', function(err){
     // Return to step 2 if error occurs
     step2();
 });
+
+function sendMessage(msg){
+    for(var i in connections){
+        connections[i].send(msg);
+    }
+}
+
 
 $('#shutdown').click(function(){
     for(var i in callers){
@@ -126,21 +147,6 @@ $('#shutdown').click(function(){
     step2();
 });
 
-
-function sendMessage(msg){
-    for(var i in connections){
-        connections[i].send(msg);
-    }
-}
-
-
-// Retry if getUserMedia fails
-$('#step1-retry').click(function(){
-    step1Err.hide();
-    step1Info.show();
-    step1();
-});
-
 $('#chatInput').on('keyup', function(e){
     var value = $.trim($(this).val());
     if(e.keyCode === KEY_ENTER){
@@ -150,7 +156,6 @@ $('#chatInput').on('keyup', function(e){
             $('#chatInput').val("");
         }
     }
-    return false;
 });
 
 function changeNickName(newName){
@@ -194,6 +199,14 @@ document.addEventListener(FULLSCREEN_EVENT, function () {
 }, false);
 
 
+// Retry if getUserMedia fails
+$('#step1-retry').click(function(){
+    step1Err.hide();
+    step1Info.show();
+    step1();
+});
+
+
 
 function step2 () {
     step1Div.hide();
@@ -220,12 +233,10 @@ function getConnection(peerId){
     return connections[peerId];
 }
 
-function onReceiveCall(call) {
+function onReceiveCall(call, isHost) {
+
     createConnection(call.peer);
-    for(var i in callers){
-        var conn = getConnection(callers[i].peer);
-        conn.send("NEW_COMER:"+ call.peer);
-    }
+   
     var id = new Date().getTime();
     var divId = id + "_d";
     var videoId = id + "_v";
@@ -235,7 +246,8 @@ function onReceiveCall(call) {
                       videoId: videoId,
                       endCallId: endCallId,
                       callerId: call.peer,
-                      caller: call
+                      caller: call,
+                      isHost: isHost
                   };
     // Wait for stream on the call, then set peer video display
     call.on('stream', function(stream){
@@ -281,10 +293,10 @@ function onCallClose(options){
 function addPeople(options){
     var html = "<div id=\""+options.divId+"\" class=\"col-md-3\">" +
                     "<div class=\"thumbnail frameClient\">" +
-                        "<video id=\""+options.videoId+"\" class=\"thumbnail video\" src=\""+options.url+"\" autoplay></video>" +
+                        "<video id=\""+options.videoId+"\" class=\"video\" src=\""+options.url+"\" autoplay></video>" +
                         "<div class=\"caption\">" +
-                            "<p id=\""+options.callerId+"\">Id: <span class=\"label label-info\">"+options.callerId+"</span></p>" +
-                            "<p class=\"pull-right\"><a fullscreen class=\"glyphicon glyphicon-fullscreen rightoff\" title=\"fullscreen\"></a><a href=\"#\" class=\"btn btn-danger\" id=\""+options.endCallId+"\">End call</a></p>" +
+                            "<p id=\""+options.callerId+"\" isHost=\""+options.isHost+"\">"+(options.isHost ? "HOST " : "Id")+": <span class=\"label label-info\">"+ options.callerId+"</span></p>" +
+                            "<p class=\"pull-left\"><a fullscreen class=\"glyphicon glyphicon-fullscreen rightoff\" title=\"fullscreen\"></a></p>" +
                         "</div>" +
                     "</div>" +
                 "</div>";

@@ -1,0 +1,17 @@
+{
+  "name": "PeerJSTrial",
+  "version": "1.0.0",
+  "author": "Howard Zuo",
+  "devDependencies": {
+    "grunt": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-contrib-clean": "latest",
+    "grunt-template": "latest",
+    "grunt-contrib-copy": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-cssmin": "latest",
+    "bower": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-contrib-connect": "latest"
+  }
+}

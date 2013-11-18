@@ -2,9 +2,7 @@
 <html>
 <head>
   <title>Video Chart -- HOST</title>
-  <link rel="stylesheet" href="css/bootstrap.css">
-  <link rel="stylesheet" href="css/bootstrap-theme.css">
-  <link rel="stylesheet" href="css/style.css">
+  <% _.forEach(csss, function(css) { %><link rel="stylesheet" href="<%- css %>"><%- "\n" %><% }); %>
 </head>
 
 <body>
@@ -15,7 +13,7 @@
           <!-- Video area -->
           <div class="col-md-3">
                <div class="thumbnail frameHost">
-                   <video id="host-video" class="thumbnail video" muted="true" autoplay></video>
+                   <video id="host-video" class="video" muted="true" autoplay></video>
                    <div class="caption">
                        <h3><a fullscreen class="glyphicon glyphicon-fullscreen" title="fullscreen"></a></h3>
                    </div>
@@ -93,8 +91,4 @@
 
 </body>
 </html>
-<script type="text/javascript" src="libs/JQuery-2.0.3.js"></script>
-<script type="text/javascript" src="libs/bootstrap.js"></script>
-<script type="text/javascript" src="libs/peer.js"></script>
-<script type="text/javascript" src="apps/compatibility.js"></script>
-<script type="text/javascript" src="apps/host.js"></script>
+<% _.forEach(hostScripts, function(script) { %><script type="text/javascript" src="<%- script %>"></script><%- "\n" %><% }); %>
